@@ -1,11 +1,17 @@
-ANIFLIX Auto Rename Bot — updated files only
+ANIFLIX Auto Rename Bot — targeted startup/plugin discovery fix
 
-Copy the files in this archive into the matching paths in your existing repository, overwriting existing files.
+Included file: bot.py only.
 
-New files: plugins/__init__.py, plugins/core_commands.py, plugins/start_cb.py, plugins/thumb_cap.py, DEPLOY-FIX-NOTES.txt.
+Copy this file to the root of your existing repository, replacing the old bot.py.
+Keep the plugins/ directory and all existing environment variables unchanged.
 
-IMPORTANT: Remove these old files from your repository after copying the new files, because their renamed replacements are included:
-- plugins/start_&_cb.py
-- plugins/thumb_&_cap.py
+This update anchors the working directory to bot.py, performs explicit preflight
+imports for all nine expected plugins, logs full tracebacks for import failures,
+and increases Pyrogram logging so plugin discovery problems are visible in Render.
 
-This archive intentionally excludes unchanged files.
+After deployment, check for lines beginning with:
+  Plugin import preflight OK:
+  PLUGIN IMPORT FAILED:
+  Registered Pyrogram handler counts by group:
+
+Do not share BOT_TOKEN, API_HASH, or DB_URL in logs/screenshots.
