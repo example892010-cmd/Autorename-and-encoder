@@ -1,0 +1,16 @@
+ANIFLIX Auto Rename Bot - diagnostic fix
+
+Changes:
+- Pyrogram logs are set to INFO so plugin load messages/warnings are visible.
+- Renamed start_&_cb.py to start_cb.py and thumb_&_cap.py to thumb_cap.py.
+- /start sends the welcome reply before attempting database tracking and falls back to text if the photo reply fails.
+- Added private-update logs and fallback /start and /ping handlers. If these fallback handlers are used, Render logs will say so.
+- Removed __pycache__ and .pyc files from the archive.
+
+Deployment:
+1. Replace the repository files with this project's contents (do not upload the ZIP as a single file).
+2. Keep your existing environment variables; do not share BOT_TOKEN or DB_URL.
+3. Deploy and test /start and /ping.
+4. In logs, look for 'Successfully loaded ... plugins', 'Incoming private update', or 'Fallback /start handler was used'.
+
+Syntax checks do not prove live Telegram behavior; verify on Render after deployment.
