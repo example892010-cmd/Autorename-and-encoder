@@ -4,6 +4,8 @@ from helper.database import AshutoshGoswami24
 
 @Client.on_message(filters.private & filters.command("autorename"))
 async def auto_rename_command(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     user_id = message.from_user.id
 
     # Extract the format from the command
@@ -20,7 +22,9 @@ async def auto_rename_command(client, message):
 
 @Client.on_message(filters.private & filters.command("setmedia"))
 async def set_media_command(client, message):
-    user_id = message.from_user.id    
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
+    user_id = message.from_user.id
     media_type = message.text.split("/setmedia", 1)[1].strip().lower()
     if media_type not in {"document", "video", "audio"}:
         return await message.reply_text("**Use:** `/setmedia document`, `/setmedia video`, or `/setmedia audio`")

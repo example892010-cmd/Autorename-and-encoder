@@ -189,6 +189,9 @@ async def _upload_encoded(client, message: Message, output: str, display_name: s
 @Client.on_message(filters.private & (filters.video | filters.document), group=-1)
 async def encode_video_upload(client: Client, message: Message):
     """Encode incoming video media; let legacy handler process other files."""
+    if not madflixbotz.is_configured:
+        await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
+        raise StopPropagation
     if not message.from_user:
         return
 

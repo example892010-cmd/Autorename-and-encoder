@@ -162,6 +162,8 @@ print(f"Extracted Episode Number: {episode_number}")
 
 @Client.on_message(filters.private & (filters.document | filters.video | filters.audio))
 async def auto_rename_files(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     user_id = message.from_user.id
     format_template = await AshutoshGoswami24.get_format_template(user_id)
     media_preference = await AshutoshGoswami24.get_media_preference(user_id)

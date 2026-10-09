@@ -43,6 +43,7 @@ async def tutorial(_, message):
 
 ➻ Send /autorename to set your rename format.
 ➻ Send a file to rename it automatically.
+➻ Use /about for bot information.
 
 📝 <b>Caption</b>
 ➻ /set_caption — Set a custom caption
@@ -50,7 +51,7 @@ async def tutorial(_, message):
 ➻ /del_caption — Delete caption
 
 🖼️ <b>Thumbnail</b>
-➻ Send a photo to save it as your thumbnail.
+➻ Use /setthumb, then send a photo to save it as your thumbnail.
 ➻ /viewthumb — View thumbnail
 ➻ /delthumb — Delete thumbnail
 
@@ -63,6 +64,14 @@ Contact @TANJIROKAMADO404""",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("⚡ Tutorial Support", url="https://t.me/+1jDuhUQ41hA1YmVl")]]
         ),
+    )
+
+
+@Client.on_message(filters.private & filters.command(["about"]))
+async def about_command(_, message):
+    await message.reply_text(
+        Txt.ABOUT_TXT,
+        disable_web_page_preview=True,
     )
 
 
@@ -93,6 +102,8 @@ async def ping(_, message):
 
 @Client.on_message(filters.command(["stats", "status"]) & filters.user(Config.ADMIN))
 async def get_stats(bot, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     total_users = await AshutoshGoswami24.total_users_count()
     # uptime = time.strftime("%Hh%Mm%Ss", time.gmtime(time.time() - bot.uptime))
     start_t = time.time()
@@ -108,6 +119,8 @@ async def get_stats(bot, message):
     filters.command("broadcast") & filters.user(Config.ADMIN) & filters.reply
 )
 async def broadcast_handler(bot: Client, m: Message):
+    if not AshutoshGoswami24.is_configured:
+        return await m.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     # await bot.send_message(Config.LOG_CHANNEL, f"{m.from_user.mention} or {m.from_user.id} Is Started The Broadcast......")
     all_users = await AshutoshGoswami24.get_all_users()
     broadcast_msg = m.reply_to_message

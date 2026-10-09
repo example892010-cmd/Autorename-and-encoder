@@ -44,12 +44,16 @@ async def metadata_text(user_id):
 
 @Client.on_message(filters.private & filters.command("metadata"))
 async def metadata(client: Client, message: Message):
+    if not db.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     text, keyboard = await metadata_text(message.from_user.id)
     await message.reply_text(text=text, reply_markup=keyboard, disable_web_page_preview=True)
 
 
 @Client.on_callback_query(filters.regex(r"^(on_metadata|off_metadata|metainfo)$"))
 async def metadata_callback(client: Client, query: CallbackQuery):
+    if not db.is_configured:
+        return await query.answer("Database is not configured. Ask the bot admin to set DB_URL.", show_alert=True)
     user_id = query.from_user.id
     data = query.data
 
@@ -74,6 +78,8 @@ async def metadata_callback(client: Client, query: CallbackQuery):
 
 
 async def _save_field(client, message, setter, label, example):
+    if not db.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     if len(message.command) == 1:
         return await message.reply_text(f"**Gɪᴠᴇ Tʜᴇ {label}\n\nExᴀᴍᴩʟᴇ:- {example}**")
     value = message.text.split(" ", 1)[1].strip()

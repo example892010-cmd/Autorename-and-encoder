@@ -6,11 +6,23 @@ from .utils import send_log
 
 class Database:
     def __init__(self, uri, database_name):
-        if not uri:
-            raise ValueError("DB_URL environment variable is required")
-        self._client = motor.motor_asyncio.AsyncIOMotorClient(uri, serverSelectionTimeoutMS=10000)
-        self.AshutoshGoswami24 = self._client[database_name]
-        self.col = self.AshutoshGoswami24.user
+        # Never raise during module import: one missing database variable must not
+        # prevent unrelated commands such as /help and /tutorial from loading.
+        self.is_configured = bool(uri and str(uri).strip())
+        self._client = (
+            motor.motor_asyncio.AsyncIOMotorClient(
+                str(uri).strip(), serverSelectionTimeoutMS=10000
+            )
+            if self.is_configured else None
+        )
+        self.AshutoshGoswami24 = self._client[database_name] if self._client else None
+        self.col = self.AshutoshGoswami24.user if self.AshutoshGoswami24 else None
+
+    def require_database(self):
+        if not self.is_configured or self.col is None:
+            raise RuntimeError(
+                "Database is not configured. Add DB_URL to the Render environment variables."
+            )
 
     def new_user(self, id):
         return dict(

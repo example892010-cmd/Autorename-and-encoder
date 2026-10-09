@@ -4,6 +4,8 @@ from helper.database import AshutoshGoswami24
 
 @Client.on_message(filters.private & filters.command("set_caption"))
 async def add_caption(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     if len(message.command) == 1:
         return await message.reply_text(
             "**Give The Caption\n\nExample :- `/set_caption 📕Name ➠ : {filename} \n\n🔗 Size ➠ : {filesize} \n\n⏰ Duration ➠ : {duration}`**"
@@ -15,6 +17,8 @@ async def add_caption(client, message):
 
 @Client.on_message(filters.private & filters.command("del_caption"))
 async def delete_caption(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     caption = await AshutoshGoswami24.get_caption(message.from_user.id)
     if not caption:
         return await message.reply_text("**You Don't Have Any Caption ❌**")
@@ -24,6 +28,8 @@ async def delete_caption(client, message):
 
 @Client.on_message(filters.private & filters.command(["see_caption", "view_caption"]))
 async def see_caption(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     caption = await AshutoshGoswami24.get_caption(message.from_user.id)
     if caption:
         await message.reply_text(f"**Your Caption :**\n\n`{caption}`")
@@ -33,6 +39,8 @@ async def see_caption(client, message):
 
 @Client.on_message(filters.private & filters.command(["view_thumb", "viewthumb"]))
 async def viewthumb(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     thumb = await AshutoshGoswami24.get_thumbnail(message.from_user.id)
     if thumb:
         await client.send_photo(chat_id=message.chat.id, photo=thumb)
@@ -42,12 +50,21 @@ async def viewthumb(client, message):
 
 @Client.on_message(filters.private & filters.command(["del_thumb", "delthumb"]))
 async def removethumb(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     await AshutoshGoswami24.set_thumbnail(message.from_user.id, file_id=None)
     await message.reply_text("**Thumbnail Deleted Successfully 🗑️**")
 
 
+@Client.on_message(filters.private & filters.command("setthumb"))
+async def setthumb_help(client, message):
+    await message.reply_text("Send the image you want to use as your thumbnail. I will save it automatically.")
+
+
 @Client.on_message(filters.private & filters.photo)
 async def addthumbs(client, message):
+    if not AshutoshGoswami24.is_configured:
+        return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     mkn = await message.reply_text("Please Wait ...")
     await AshutoshGoswami24.set_thumbnail(
         message.from_user.id, file_id=message.photo.file_id

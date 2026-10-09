@@ -26,7 +26,19 @@ class Bot(Client):
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
             workers=200,
-            plugins={"root": "plugins"},
+            plugins={
+                "root": "plugins",
+                "include": [
+                    "admin_panel",
+                    "auto_rename",
+                    "encode_pipeline",
+                    "file_rename",
+                    "force_subs",
+                    "metadata",
+                    "start_cb",
+                    "thumb_cap",
+                ],
+            },
             sleep_threshold=15,
         )
 
@@ -84,6 +96,8 @@ class Bot(Client):
             group=0,
         )
 
+        handler_counts = {group: len(handlers) for group, handlers in self.dispatcher.groups.items()}
+        logging.info("Registered handler counts by group: %s", handler_counts)
         logging.info(
             "%s started successfully | Pyrogram %s | Layer %s",
             me.first_name,

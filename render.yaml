@@ -21,7 +21,7 @@ services:
       - key: FORCE_SUB_CHANNELS
         sync: false
       - key: LOG_CHANNEL
-        sync: false
+        value: "0"
       - key: START_PIC
         sync: false
       - key: WEBHOOK
