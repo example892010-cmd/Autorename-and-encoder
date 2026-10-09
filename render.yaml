@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: aniflix-auto-rename-bot
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: false
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: ADMIN
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: DB_NAME
+        value: autorename
+      - key: FORCE_SUB_CHANNELS
+        sync: false
+      - key: LOG_CHANNEL
+        sync: false
+      - key: START_PIC
+        sync: false
+      - key: WEBHOOK
+        value: "True"
+      - key: ENCODE_RESOLUTIONS
+        value: "480,720,1080"
+      - key: ENCODE_CONCURRENCY
+        value: "2"
+      - key: ENCODE_PRESET
+        value: veryfast
+      - key: ENCODE_CRF
+        value: "24"
