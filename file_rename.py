@@ -154,12 +154,6 @@ def extract_title(filename):
     return title or "Unknown Title"
 
 
-# Example Usage:
-filename = "Naruto Shippuden S01E01 1080p.mkv"
-episode_number = extract_episode_number(filename)
-print(f"Extracted Episode Number: {episode_number}")
-
-
 @Client.on_message(filters.private & (filters.document | filters.video | filters.audio))
 async def auto_rename_files(client, message):
     if not AshutoshGoswami24.is_configured:
@@ -175,15 +169,19 @@ async def auto_rename_files(client, message):
 
     if message.document:
         file_id = message.document.file_id
-        file_name = message.document.file_name
+        file_name = message.document.file_name or f"document_{message.id}.bin"
         media_type = media_preference or "document"
     elif message.video:
         file_id = message.video.file_id
-        file_name = f"{message.video.file_name or 'video'}.mp4"
+        file_name = message.video.file_name or f"video_{message.id}.mp4"
+        if not os.path.splitext(file_name)[1]:
+            file_name += ".mp4"
         media_type = media_preference or "video"
     elif message.audio:
         file_id = message.audio.file_id
-        file_name = f"{message.audio.file_name or 'audio'}.mp3"
+        file_name = message.audio.file_name or f"audio_{message.id}.mp3"
+        if not os.path.splitext(file_name)[1]:
+            file_name += ".mp3"
         media_type = media_preference or "audio"
     else:
         return await message.reply_text("Unsupported File Type")
@@ -213,7 +211,10 @@ async def auto_rename_files(client, message):
         format_template = format_template.replace(placeholder, value)
 
     _, file_extension = os.path.splitext(file_name)
-    renamed_file_name = f"{format_template}{file_extension}"
+    # Prevent path separators and unsupported filename characters from creating
+    # nested paths or invalid uploads.
+    safe_template = re.sub(r'[\\/:*?"<>|]+', "_", format_template).strip(" .")
+    renamed_file_name = f"{safe_template or 'renamed_file'}{file_extension}"
     renamed_file_path = f"downloads/{renamed_file_name}"
     metadata_file_path = f"Metadata/{renamed_file_name}"
     os.makedirs(os.path.dirname(renamed_file_path), exist_ok=True)
@@ -274,8 +275,8 @@ async def auto_rename_files(client, message):
                     metadata_args += ["-metadata:s:s", f"title={metadata_values['subtitle']}"]
 
                 cmd_parts = ["ffmpeg", "-y", "-i", renamed_file_path, "-map", "0", "-c:s", "copy", "-c:a", "copy", "-c:v", "copy"]
-                for key, value in metadata_args:
-                    cmd_parts.extend([key, value])
+                for index in range(0, len(metadata_args), 2):
+                    cmd_parts.extend(metadata_args[index:index + 2])
                 cmd_parts.append(metadata_file_path)
                 cmd = " ".join(shlex.quote(part) for part in cmd_parts)
                 try:

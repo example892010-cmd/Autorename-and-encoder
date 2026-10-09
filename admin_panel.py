@@ -36,60 +36,6 @@ async def restart_bot(b, m):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 
-@Client.on_message(filters.private & filters.command(["tutorial"]))
-async def tutorial(_, message):
-    await message.reply_text(
-        """📚 <b>AUTO RENAME BOT TUTORIAL</b>
-
-➻ Send /autorename to set your rename format.
-➻ Send a file to rename it automatically.
-➻ Use /about for bot information.
-
-📝 <b>Caption</b>
-➻ /set_caption — Set a custom caption
-➻ /see_caption — View caption
-➻ /del_caption — Delete caption
-
-🖼️ <b>Thumbnail</b>
-➻ Use /setthumb, then send a photo to save it as your thumbnail.
-➻ /viewthumb — View thumbnail
-➻ /delthumb — Delete thumbnail
-
-🎬 <b>Metadata</b>
-➻ Use /metadata to customize media metadata.
-
-💡 <b>Need help?</b>
-Contact @TANJIROKAMADO404""",
-        disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("⚡ Tutorial Support", url="https://t.me/+1jDuhUQ41hA1YmVl")]]
-        ),
-    )
-
-
-@Client.on_message(filters.private & filters.command(["about"]))
-async def about_command(_, message):
-    await message.reply_text(
-        Txt.ABOUT_TXT,
-        disable_web_page_preview=True,
-    )
-
-
-@Client.on_message(filters.private & filters.command(["help"]))
-async def help_command(_, message):
-    await message.reply_text(
-        Txt.HELP_TXT.format(message.from_user.first_name),
-        disable_web_page_preview=True,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("⚙️ Rename Setup", callback_data="file_names")],
-            [
-                InlineKeyboardButton("🖼️ Thumbnail", callback_data="thumbnail"),
-                InlineKeyboardButton("✏️ Caption", callback_data="caption"),
-            ],
-        ]),
-    )
-
-
 @Client.on_message(filters.private & filters.command(["ping", "p"]))
 async def ping(_, message):
     start_t = time.time()
@@ -155,7 +101,7 @@ async def send_msg(user_id, message):
         return 200
     except FloodWait as e:
         await asyncio.sleep(e.value)
-        return send_msg(user_id, message)
+        return await send_msg(user_id, message)
     except InputUserDeactivated:
         logger.info(f"{user_id} : Deactivated")
         return 400

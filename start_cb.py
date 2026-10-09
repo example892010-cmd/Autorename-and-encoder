@@ -13,6 +13,19 @@ from helper.database import AshutoshGoswami24
 from config import Config, Txt
 
 
+async def _edit_menu_message(message, **kwargs):
+    """Edit text menus correctly whether /start was sent with a photo or text."""
+    text = kwargs.get("text", "")
+    markup = kwargs.get("reply_markup")
+    if getattr(message, "photo", None) or getattr(message, "video", None) or getattr(message, "document", None):
+        return await message.edit_caption(caption=text, reply_markup=markup)
+    return await message.edit_text(
+        text=text,
+        reply_markup=markup,
+        disable_web_page_preview=kwargs.get("disable_web_page_preview", False),
+    )
+
+
 @Client.on_message(filters.private & filters.command("start"))
 async def start(client, message):
     user = message.from_user
@@ -89,14 +102,14 @@ async def start(client, message):
             logging.exception("Could not send /start log")
 
 
-@Client.on_callback_query()
+@Client.on_callback_query(filters.regex(r"^(home|caption|help|donate|file_names|thumbnail|about|close)$"))
 async def cb_handler(client, query: CallbackQuery):
     await query.answer()
     data = query.data
     user_id = query.from_user.id
 
     if data == "home":
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.START_TXT.format(query.from_user.first_name),
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
@@ -120,7 +133,7 @@ async def cb_handler(client, query: CallbackQuery):
             ),
         )
     elif data == "caption":
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.CAPTION_TXT,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
@@ -133,7 +146,7 @@ async def cb_handler(client, query: CallbackQuery):
             ),
         )
     elif data == "help":
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.HELP_TXT.format(client.mention),
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
@@ -155,7 +168,7 @@ async def cb_handler(client, query: CallbackQuery):
             ),
         )
     elif data == "donate":
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.DONATE_TXT,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
@@ -170,7 +183,7 @@ async def cb_handler(client, query: CallbackQuery):
 
     elif data == "file_names":
         format_template = await AshutoshGoswami24.get_format_template(user_id)
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.FILE_NAME_TXT.format(format_template=format_template),
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
@@ -184,7 +197,7 @@ async def cb_handler(client, query: CallbackQuery):
         )
 
     elif data == "thumbnail":
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.THUMBNAIL_TXT,
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -197,7 +210,7 @@ async def cb_handler(client, query: CallbackQuery):
         )
 
     elif data == "about":
-        await query.message.edit_text(
+        await _edit_menu_message(query.message, 
             text=Txt.ABOUT_TXT,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(

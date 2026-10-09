@@ -1,4 +1,6 @@
 import asyncio
+import importlib
+import inspect
 import logging
 from datetime import datetime
 
@@ -26,24 +28,37 @@ class Bot(Client):
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
             workers=200,
-            plugins={
-                "root": "plugins",
-                "include": [
-                    "admin_panel",
-                    "auto_rename",
-                    "encode_pipeline",
-                    "file_rename",
-                    "force_subs",
-                    "metadata",
-                    "start_cb",
-                    "thumb_cap",
-                ],
-            },
             sleep_threshold=15,
         )
 
+    def _load_project_plugins(self):
+        plugin_names = [
+            "core_commands", "start_cb", "admin_panel", "auto_rename",
+            "encode_pipeline", "file_rename", "force_subs", "metadata", "thumb_cap",
+        ]
+        loaded = 0
+        for plugin_name in plugin_names:
+            module_name = f"plugins.{plugin_name}"
+            try:
+                module = importlib.import_module(module_name)
+                module_handlers = 0
+                for obj in vars(module).values():
+                    if not inspect.isfunction(obj) or obj.__module__ != module.__name__:
+                        continue
+                    for handler, group in getattr(obj, "handlers", []):
+                        self.add_handler(handler, group)
+                        module_handlers += 1
+                loaded += module_handlers
+                logging.info("Loaded plugin %s (%s handlers)", module_name, module_handlers)
+            except Exception:
+                logging.exception("FAILED loading plugin %s", module_name)
+        logging.info("Explicit plugin registration complete: %s handlers", loaded)
+
     async def start(self):
         await super().start()
+        # Dispatcher is initialized by super().start(); register project handlers
+        # now and log every import failure instead of silently skipping plugins.
+        self._load_project_plugins()
         me = await self.get_me()
         self.mention = me.mention
         self.username = me.username

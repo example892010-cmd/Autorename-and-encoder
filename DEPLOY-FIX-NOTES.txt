@@ -1,26 +1,28 @@
-ANIFLIX Auto Rename & Encoder Bot — full plugin-loading fix
+ANIFLIX Auto Rename & Encoder Bot — full-repository repair build
 
-Important fixes:
-- Plugin filenames use valid Python module names.
-- Plugin modules are listed explicitly in the Pyrogram plugin configuration.
-- A missing DB_URL no longer prevents all database-dependent plugin modules from importing; /help and /tutorial can still load.
-- Database-dependent commands show a clear message if DB_URL is missing.
-- Logs include the registered handler counts by group.
-- Removed Python bytecode caches from the ZIP.
+Changes made after reviewing the uploaded source:
+- Replaced silent smart-plugin discovery with explicit module imports and handler registration after Pyrogram initializes its dispatcher.
+- Each plugin import now logs its loaded handler count; exceptions print full tracebacks in Render logs.
+- Added authoritative /help, /tutorial and /about handlers in an early handler group and removed duplicate command handlers.
+- Narrowed the start plugin callback filter so it no longer catches metadata and force-sub callback updates intended for other handlers.
+- Fixed the metadata FFmpeg argument iteration bug in file_rename.py.
+- Hardened missing file names and sanitized output filenames.
+- Kept existing branding, database schema, rename/caption/thumbnail/metadata features, force-sub behavior and encoder pipeline.
 
-Render requirements:
-- Set API_ID, API_HASH, BOT_TOKEN, ADMIN, and DB_URL.
-- DB_NAME should be autorename (unless your database is named differently).
-- Set FORCE_SUB_CHANNELS only if you want force-subscription enabled.
-- LOG_CHANNEL is optional; leave it at 0 if not using a log channel.
-- Never share BOT_TOKEN or DB_URL publicly.
+Render environment variables:
+- Required: API_ID, API_HASH, BOT_TOKEN, DB_URL.
+- DB_NAME defaults to autorename.
+- ADMIN should contain your Telegram user ID(s), separated by commas.
+- FORCE_SUB_CHANNELS is optional and should contain channel usernames separated by commas.
+- LOG_CHANNEL is optional; set it to 0/empty if not using a log channel.
+- Keep credentials private; do not put BOT_TOKEN or DB_URL in source code.
 
-Deploy:
-1. Replace the repository files with the contents of this ZIP (do not upload the ZIP as a single file).
-2. Keep the actual values for your existing Telegram and MongoDB environment variables.
-3. Deploy and check logs for 'Registered handler counts by group'.
-4. Test /start, /help, /tutorial, /about, /ping, and /autorename.
+Deployment:
+1. Extract this ZIP and replace the repository files with its contents (do not upload the ZIP as a single file).
+2. Preserve the actual environment variables already set in Render.
+3. Deploy and inspect logs for 'Loaded plugin' and 'Explicit plugin registration complete'. Any failed import should now show its traceback.
+4. Test /start, /help, /tutorial, /about, /ping, /autorename, then send a small video/document to test file handling.
 
-Validation:
-- Python syntax compilation is run before packaging.
-- This archive cannot be verified against your live Telegram token or MongoDB cluster here. A valid DB_URL and Render deployment are still required for saved settings, renaming, thumbnails, captions, metadata, and encoding.
+Verification boundary:
+- Python compileall and static source checks are run before packaging.
+- This environment has no network access and cannot log into the user's Telegram bot or MongoDB, so live Telegram, database and encoding behavior cannot be honestly certified here. Runtime logs are needed to confirm those integrations.

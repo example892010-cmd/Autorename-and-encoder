@@ -9,7 +9,7 @@ async def auto_rename_command(client, message):
     user_id = message.from_user.id
 
     # Extract the format from the command
-    format_template = message.text.split("/autorename", 1)[1].strip()
+    format_template = " ".join(message.command[1:]).strip()
     if not format_template:
         return await message.reply_text(
             "**Usage:** `/autorename {title} S{season} Ep{episode} [{quality}] [TAMIL]`"
@@ -25,7 +25,7 @@ async def set_media_command(client, message):
     if not AshutoshGoswami24.is_configured:
         return await message.reply_text("⚠️ Database is not configured. Please add DB_URL in Render → Environment.")
     user_id = message.from_user.id
-    media_type = message.text.split("/setmedia", 1)[1].strip().lower()
+    media_type = " ".join(message.command[1:]).strip().lower()
     if media_type not in {"document", "video", "audio"}:
         return await message.reply_text("**Use:** `/setmedia document`, `/setmedia video`, or `/setmedia audio`")
 
