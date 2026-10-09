@@ -1,13 +1,10 @@
 import asyncio
-import importlib
-import inspect
 import logging
 from datetime import datetime
 
 from aiohttp import web
-from pyrogram import Client, __version__, filters
+from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
-from pyrogram.handlers import MessageHandler
 from pytz import timezone
 
 from config import Config
@@ -18,6 +15,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logging.getLogger("pyrogram").setLevel(logging.INFO)
+logging.getLogger("pyrogram.dispatcher").setLevel(logging.INFO)
 
 
 class Bot(Client):
@@ -27,38 +25,13 @@ class Bot(Client):
             api_id=Config.API_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
-            workers=200,
+            workers=32,
+            plugins={"root": "plugins"},
             sleep_threshold=15,
         )
 
-    def _load_project_plugins(self):
-        plugin_names = [
-            "core_commands", "start_cb", "admin_panel", "auto_rename",
-            "encode_pipeline", "file_rename", "force_subs", "metadata", "thumb_cap",
-        ]
-        loaded = 0
-        for plugin_name in plugin_names:
-            module_name = f"plugins.{plugin_name}"
-            try:
-                module = importlib.import_module(module_name)
-                module_handlers = 0
-                for obj in vars(module).values():
-                    if not inspect.isfunction(obj) or obj.__module__ != module.__name__:
-                        continue
-                    for handler, group in getattr(obj, "handlers", []):
-                        self.add_handler(handler, group)
-                        module_handlers += 1
-                loaded += module_handlers
-                logging.info("Loaded plugin %s (%s handlers)", module_name, module_handlers)
-            except Exception:
-                logging.exception("FAILED loading plugin %s", module_name)
-        logging.info("Explicit plugin registration complete: %s handlers", loaded)
-
     async def start(self):
         await super().start()
-        # Dispatcher is initialized by super().start(); register project handlers
-        # now and log every import failure instead of silently skipping plugins.
-        self._load_project_plugins()
         me = await self.get_me()
         self.mention = me.mention
         self.username = me.username
@@ -67,52 +40,11 @@ class Bot(Client):
         await app.setup()
         await web.TCPSite(app, "0.0.0.0", Config.PORT).start()
 
-        # Diagnostics: prove whether Telegram updates reach this process.
-        async def trace_private_update(client, message):
-            text = (message.text or message.caption or "<non-text message>")[:100]
-            logging.info(
-                "Incoming private update from user_id=%s: %s",
-                getattr(message.from_user, "id", "unknown"),
-                text,
-            )
-
-        # Fallback handlers are added after plugin loading. If the normal plugin
-        # command is registered, it runs first in group 0; otherwise these reply.
-        async def fallback_start(client, message):
-            logging.warning("Fallback /start handler was used; inspect plugin loading.")
-            try:
-                await message.reply_text(
-                    "👋 Hello " + (message.from_user.first_name or "there") + "!\n\n"
-                    "Advanced Auto Rename Bot\n"
-                    "Use /help or /tutorial to get started.\n\n"
-                    "Powered By @ANIFLIXANIMETAMIL\n"
-                    "Developer: @TANJIROKAMADO404"
-                )
-            except Exception:
-                logging.exception("Fallback /start reply failed")
-
-        async def fallback_ping(client, message):
-            logging.warning("Fallback /ping handler was used; inspect plugin loading.")
-            try:
-                await message.reply_text("Pong! The bot is receiving commands.")
-            except Exception:
-                logging.exception("Fallback /ping reply failed")
-
-        self.add_handler(
-            MessageHandler(trace_private_update, filters.private),
-            group=-100,
-        )
-        self.add_handler(
-            MessageHandler(fallback_start, filters.private & filters.command("start")),
-            group=0,
-        )
-        self.add_handler(
-            MessageHandler(fallback_ping, filters.private & filters.command(["ping", "p"])),
-            group=0,
-        )
-
         handler_counts = {group: len(handlers) for group, handlers in self.dispatcher.groups.items()}
-        logging.info("Registered handler counts by group: %s", handler_counts)
+        logging.info("Registered Pyrogram handler counts by group: %s", handler_counts)
+        if sum(handler_counts.values()) < 10:
+            logging.error("Very few handlers were registered; inspect Pyrogram plugin import errors above.")
+
         logging.info(
             "%s started successfully | Pyrogram %s | Layer %s",
             me.first_name,

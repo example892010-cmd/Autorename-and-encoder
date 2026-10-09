@@ -102,11 +102,35 @@ async def start(client, message):
             logging.exception("Could not send /start log")
 
 
-@Client.on_callback_query(filters.regex(r"^(home|caption|help|donate|file_names|thumbnail|about|close)$"))
+@Client.on_callback_query(filters.regex(r"^(home|caption|help|donate|file_names|thumbnail|about|close|core_tutorial|core_about)$"))
 async def cb_handler(client, query: CallbackQuery):
     await query.answer()
     data = query.data
     user_id = query.from_user.id
+
+    if data == "core_tutorial":
+        await _edit_menu_message(
+            query.message,
+            text=(
+                "<b>QUICK TUTORIAL</b>\n\n"
+                "1. Use /autorename followed by your filename format.\n"
+                "2. Send a video or video document to encode, or another file to rename.\n"
+                "3. Use /set_caption to set an upload caption.\n"
+                "4. Use /setthumb, then send a photo to save a thumbnail.\n"
+                "5. Use /metadata to configure media metadata.\n\n"
+                "Help: @TANJIROKAMADO404"
+            ),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="home")]]),
+        )
+        return
+    if data == "core_about":
+        await _edit_menu_message(
+            query.message,
+            text=Txt.ABOUT_TXT,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="home")]]),
+            disable_web_page_preview=True,
+        )
+        return
 
     if data == "home":
         await _edit_menu_message(query.message, 

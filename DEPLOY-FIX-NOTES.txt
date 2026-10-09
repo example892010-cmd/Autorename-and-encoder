@@ -1,13 +1,18 @@
-ANIFLIX Auto Rename & Encoder Bot — full-repository repair build
+ANIFLIX Auto Rename & Encoder Bot — reference-based repair build
 
-Changes made after reviewing the uploaded source:
-- Replaced silent smart-plugin discovery with explicit module imports and handler registration after Pyrogram initializes its dispatcher.
-- Each plugin import now logs its loaded handler count; exceptions print full tracebacks in Render logs.
-- Added authoritative /help, /tutorial and /about handlers in an early handler group and removed duplicate command handlers.
-- Narrowed the start plugin callback filter so it no longer catches metadata and force-sub callback updates intended for other handlers.
+Main cause addressed:
+- The previous repair used a custom plugin-registration loop that filtered decorated callbacks by their Python __module__ value. Pyrogram can wrap decorated callbacks, so that filter can skip real command and media handlers while fallback /start and /ping replies still work.
+- Restored Pyrogram's native plugin discovery, matching the working pattern in the uploaded ENCODING-BOT reference: plugins={"root": "plugins"}.
+- Removed fallback handlers that could hide a plugin-loading failure. Startup now logs handler counts so an incomplete load is visible.
+
+Other fixes retained:
+- /help, /tutorial, and /about have dedicated handlers.
+- Start-menu callback filters are restricted so they do not consume force-subscription or metadata callbacks.
+- The help menu's Tutorial/About buttons now have matching callback handlers.
 - Fixed the metadata FFmpeg argument iteration bug in file_rename.py.
 - Hardened missing file names and sanitized output filenames.
-- Kept existing branding, database schema, rename/caption/thumbnail/metadata features, force-sub behavior and encoder pipeline.
+- Preserved the existing automatic multi-resolution encoding strategy: incoming video uploads are encoded at configured resolutions and each result is uploaded as it completes. Other supported files continue to the rename handler.
+- Preserved branding, database schema, caption, thumbnail, metadata, and force-subscription features.
 
 Render environment variables:
 - Required: API_ID, API_HASH, BOT_TOKEN, DB_URL.
@@ -20,9 +25,9 @@ Render environment variables:
 Deployment:
 1. Extract this ZIP and replace the repository files with its contents (do not upload the ZIP as a single file).
 2. Preserve the actual environment variables already set in Render.
-3. Deploy and inspect logs for 'Loaded plugin' and 'Explicit plugin registration complete'. Any failed import should now show its traceback.
-4. Test /start, /help, /tutorial, /about, /ping, /autorename, then send a small video/document to test file handling.
+3. Redeploy and check the startup log line "Registered Pyrogram handler counts by group". The count should include many handlers, not just a few.
+4. Test /start, /help, /tutorial, /about, /ping, /autorename, then send a small video/document.
 
 Verification boundary:
-- Python compileall and static source checks are run before packaging.
-- This environment has no network access and cannot log into the user's Telegram bot or MongoDB, so live Telegram, database and encoding behavior cannot be honestly certified here. Runtime logs are needed to confirm those integrations.
+- Python syntax parsing, required handler markers, native plugin-loader configuration, and ZIP integrity were checked before packaging.
+- This environment cannot log into the user's live Telegram bot, Render service, or MongoDB, so live Telegram/database/FFmpeg behavior cannot honestly be certified here. If the issue persists, the Render startup logs around plugin loading and handler counts will identify the next concrete failure. Never share BOT_TOKEN or DB_URL in logs/screenshots.
