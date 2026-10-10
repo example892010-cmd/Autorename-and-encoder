@@ -1,111 +1,95 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from helper.database import AshutoshGoswami24 as db
-from config import Txt
+from pyrogram.types import (
+    Message,
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from helper.database import AshutoshGoswami24
+from pyromod.exceptions import ListenerTimeout
+from config import Txt, Config
 
 
-def _value(value):
-    return value if value else "Nᴏᴛ ꜰᴏᴜɴᴅ"
+# AUTH_USERS = Config.AUTH_USERS
 
-
-async def metadata_text(user_id):
-    current = await db.get_metadata(user_id)
-    title = await db.get_title(user_id)
-    author = await db.get_author(user_id)
-    artist = await db.get_artist(user_id)
-    audio = await db.get_audio(user_id)
-    subtitle = await db.get_subtitle(user_id)
-    video = await db.get_video(user_id)
-
-    # Keep compatibility with old users who only have metadata_code saved.
-    if not any([title, author, artist, audio, subtitle, video]):
-        legacy = await db.get_metadata_code(user_id)
-        if legacy:
-            title = legacy
-
-    text = (
-        f"**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪꜱ ᴄᴜʀʀᴇɴᴛʟʏ: {'On' if current else 'Off'}**\n\n"
-        f"**◈ Tɪᴛʟᴇ ▹** `{_value(title)}`\n"
-        f"**◈ Aᴜᴛʜᴏʀ ▹** `{_value(author)}`\n"
-        f"**◈ Aʀᴛɪꜱᴛ ▹** `{_value(artist)}`\n"
-        f"**◈ Aᴜᴅɪᴏ ▹** `{_value(audio)}`\n"
-        f"**◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{_value(subtitle)}`\n"
-        f"**◈ Vɪᴅᴇᴏ ▹** `{_value(video)}`"
-    )
-    buttons = [
-        [
-            InlineKeyboardButton(f"On{' ✅' if current else ''}", callback_data="on_metadata"),
-            InlineKeyboardButton(f"Off{' ✅' if not current else ''}", callback_data="off_metadata"),
-        ],
-        [InlineKeyboardButton("How to Set Metadata", callback_data="metainfo")],
-    ]
-    return text, InlineKeyboardMarkup(buttons)
+ON = [
+    [InlineKeyboardButton("Metadata On ✅", callback_data="metadata_1")],
+    [InlineKeyboardButton("Set Custom Metadata", callback_data="custom_metadata")],
+]
+OFF = [
+    [InlineKeyboardButton("Metadata Off ❌", callback_data="metadata_0")],
+    [InlineKeyboardButton("Set Custom Metadata", callback_data="custom_metadata")],
+]
 
 
 @Client.on_message(filters.private & filters.command("metadata"))
-async def metadata(client: Client, message: Message):
-    text, keyboard = await metadata_text(message.from_user.id)
-    await message.reply_text(text=text, reply_markup=keyboard, disable_web_page_preview=True)
+async def handle_metadata(bot: Client, message: Message):
+
+    ms = await message.reply_text("**Please Wait...**", reply_to_message_id=message.id)
+    bool_metadata = await AshutoshGoswami24.get_metadata(message.from_user.id)
+    user_metadata = await AshutoshGoswami24.get_metadata_code(message.from_user.id)
+    await ms.delete()
+    if bool_metadata:
+
+        return await message.reply_text(
+            f"<b>Your Current Metadata:</b>\n\n➜ `{user_metadata}` ",
+            reply_markup=InlineKeyboardMarkup(ON),
+        )
+
+    return await message.reply_text(
+        f"<b>Your Current Metadata:</b>\n\n➜ `{user_metadata}` ",
+        reply_markup=InlineKeyboardMarkup(OFF),
+    )
 
 
-@Client.on_callback_query(filters.regex(r"^(on_metadata|off_metadata|metainfo)$"))
-async def metadata_callback(client: Client, query: CallbackQuery):
-    user_id = query.from_user.id
+@Client.on_callback_query(filters.regex(".*?(custom_metadata|metadata).*?"))
+async def query_metadata(bot: Client, query: CallbackQuery):
+
+    await query.answer()
     data = query.data
 
-    if data == "metainfo":
-        await query.answer()
-        await query.message.edit_text(
-            text=Txt.META_TXT,
-            disable_web_page_preview=True,
-            reply_markup=InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("Hᴏᴍᴇ", callback_data="home"),
-                    InlineKeyboardButton("Close", callback_data="close"),
-                ]
-            ]),
-        )
-        return
+    if data.startswith("metadata_"):
+        _bool = data.split("_")[1]
+        user_metadata = await AshutoshGoswami24.get_metadata_code(query.from_user.id)
 
-    await db.set_metadata(user_id, bool_meta=(data == "on_metadata"))
-    await query.answer("Metadata enabled" if data == "on_metadata" else "Metadata disabled")
-    text, keyboard = await metadata_text(user_id)
-    await query.message.edit_text(text=text, reply_markup=keyboard, disable_web_page_preview=True)
+        if _bool == "1":
+            await AshutoshGoswami24.set_metadata(query.from_user.id, bool_meta=False)
+            await query.message.edit(
+                f"<b>Your Current Metadata:</b>\n\n➜ `{user_metadata}` ",
+                reply_markup=InlineKeyboardMarkup(OFF),
+            )
 
+        else:
+            await AshutoshGoswami24.set_metadata(query.from_user.id, bool_meta=True)
+            await query.message.edit(
+                f"<b>Your Current Metadata:</b>\n\n➜ `{user_metadata}` ",
+                reply_markup=InlineKeyboardMarkup(ON),
+            )
 
-async def _save_field(client, message, setter, label, example):
-    if len(message.command) == 1:
-        return await message.reply_text(f"**Gɪᴠᴇ Tʜᴇ {label}\n\nExᴀᴍᴩʟᴇ:- {example}**")
-    value = message.text.split(" ", 1)[1].strip()
-    await setter(message.from_user.id, value)
-    await message.reply_text(f"**✅ {label.title()} Sᴀᴠᴇᴅ**")
-
-
-@Client.on_message(filters.private & filters.command("settitle"))
-async def set_title(client, message):
-    await _save_field(client, message, db.set_title, "Tɪᴛʟᴇ", "/settitle Encoded By @ANIFLIXANIMETAMIL")
-
-
-@Client.on_message(filters.private & filters.command("setauthor"))
-async def set_author(client, message):
-    await _save_field(client, message, db.set_author, "Aᴜᴛʜᴏʀ", "/setauthor @TANJIROKAMADO404")
-
-
-@Client.on_message(filters.private & filters.command("setartist"))
-async def set_artist(client, message):
-    await _save_field(client, message, db.set_artist, "Aʀᴛɪꜱᴛ", "/setartist @ANIFLIXANIMETAMIL")
-
-
-@Client.on_message(filters.private & filters.command("setaudio"))
-async def set_audio(client, message):
-    await _save_field(client, message, db.set_audio, "Aᴜᴅɪᴏ Tɪᴛʟᴇ", "/setaudio Tamil Audio")
-
-
-@Client.on_message(filters.private & filters.command("setsubtitle"))
-async def set_subtitle(client, message):
-    await _save_field(client, message, db.set_subtitle, "Sᴜʙᴛɪᴛʟᴇ Tɪᴛʟᴇ", "/setsubtitle English")
-
-
-@Client.on_message(filters.private & filters.command("setvideo"))
-async def set_video(client, message):
-    await _save_field(client, message, db.set_video, "Vɪᴅᴇᴏ Tɪᴛʟᴇ", "/setvideo Encoded By @TANJIROKAMADO404")
+    elif data == "custom_metadata":
+        await query.message.delete()
+        try:
+            try:
+                metadata = await bot.ask(
+                    text=Txt.SEND_METADATA,
+                    chat_id=query.from_user.id,
+                    filters=filters.text,
+                    timeout=30,
+                    disable_web_page_preview=True,
+                )
+            except ListenerTimeout:
+                await query.message.reply_text(
+                    "⚠️ Error!!\n\n**Request timed out.**\nRestart by using /metadata",
+                    reply_to_message_id=query.message.id,
+                )
+                return
+            print(metadata.text)
+            ms = await query.message.reply_text(
+                "**Please Wait...**", reply_to_message_id=metadata.id
+            )
+            await AshutoshGoswami24.set_metadata_code(
+                query.from_user.id, metadata_code=metadata.text
+            )
+            await ms.edit("**Your Metadata Code Set Successfully ✅**")
+        except Exception as e:
+            print(e)
