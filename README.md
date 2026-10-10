@@ -82,25 +82,3 @@ Credits: 🎖️ [𝗔𝘀𝗵𝘂𝘁𝗼𝘀𝗵𝗚𝗼𝘀𝘄𝗮𝗺𝗶�
 
 _Last Edited on: 08/21/2024, 10:12:42 AM_
 
-
-## Automatic multi-resolution encoding
-
-Video uploads (including common video files sent as documents) are automatically encoded to 480p, 720p, and 1080p. Each result uses the user's `/autorename` format and is uploaded as soon as that resolution finishes; the bot does not wait for the other outputs before uploading a completed one. Existing caption and custom-thumbnail settings are applied to each encoded result. Non-video documents and audio continue through the existing rename handler. FFmpeg is installed in the Docker image used by the included Render Blueprint.
-
-Environment options: `ENCODE_RESOLUTIONS` (comma-separated heights), `ENCODE_CONCURRENCY` (default 2), `ENCODE_PRESET` (default `veryfast`), and `ENCODE_CRF` (default 24). Encoding is CPU-intensive; small free instances may take a long time or run out of memory on large source videos.
-
-## Automatic multi-resolution encoding
-
-Video uploads (including common video files sent as documents) are automatically encoded to 480p, 720p, and 1080p. Each result uses the user's `/autorename` template and uploads as soon as its encode finishes. Existing custom captions, thumbnails, and configured metadata are applied to each encoded result. Non-video documents and audio continue through the original rename handler. FFmpeg is installed in the Docker image used by the included Render Blueprint.
-
-Environment options: `ENCODE_RESOLUTIONS` (comma-separated heights), `ENCODE_CONCURRENCY` (default 2), `ENCODE_PRESET` (default `veryfast`), and `ENCODE_CRF` (default 24). Encoding is CPU-intensive; small free instances may take a long time or run out of memory on large source videos.
-
-
-## Important deployment checks
-
-- Set `API_ID`, `API_HASH`, `BOT_TOKEN`, `ADMIN`, and a valid MongoDB `DB_URL` in Render Environment.
-- Set `DB_NAME=autorename` if that is the database name in your MongoDB cluster.
-- `LOG_CHANNEL` is optional; leave it empty or set it to `0` if startup notifications are not needed.
-- The bot supports `/start`, `/help`, `/about`, `/tutorial`, `/ping`, `/autorename`, `/setmedia`, `/set_caption`, `/del_caption`, `/see_caption`, `/setthumb`, `/viewthumb`, `/delthumb`, `/metadata`, `/settitle`, `/setauthor`, `/setartist`, `/setaudio`, `/setsubtitle`, `/setvideo`, `/stats`, `/broadcast` (reply to a message), and admin-only `/restart`.
-- Sending a photo saves it as the custom thumbnail.
-- A missing `DB_URL` no longer prevents the non-database commands from loading; database-dependent commands will tell you to configure it.

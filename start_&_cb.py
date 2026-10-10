@@ -17,20 +17,6 @@ from config import Config, Txt
 async def start(client, message):
     user = message.from_user
     await AshutoshGoswami24.add_user(client, message)
-
-    # Log every user who starts the bot. Uses the existing LOG_CHANNEL setting.
-    if Config.LOG_CHANNEL:
-        try:
-            username = f"@{user.username}" if user.username else "No username"
-            await client.send_message(
-                Config.LOG_CHANNEL,
-                f"🚀 **{user.first_name} was started the bot**\n\n"
-                f"👤 Name: {user.first_name}\n"
-                f"🆔 ID: `{user.id}`\n"
-                f"🔗 Username: {username}",
-            )
-        except Exception:
-            pass
     button = InlineKeyboardMarkup(
         [
             [
